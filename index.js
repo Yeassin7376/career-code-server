@@ -29,6 +29,7 @@ async function run() {
 
     //collections
     const jobsCollection = client.db("careerCode").collection("jobs")
+    const applicationsCollection = client.db('careerCode').collection("applications")
 
 
     //job api
@@ -43,6 +44,33 @@ async function run() {
       const query = { _id : new ObjectId(id) }
       const result = await jobsCollection.findOne(query)
       res.send(result) 
+      
+    })
+
+    //applicant api
+    app.get('/application', async(req, res)=>{
+      const email = req.query.email;
+      const query = {applicant : email};
+      const result = await applicationsCollection.find(query).toArray()
+
+      //bad way to aggregate data 
+      for(application of result){
+        const jobId = application.jobId
+         const jobQuery = { _id : new ObjectId(jobId) }
+         const job = await jobsCollection.findOne(jobQuery);
+         application.company = job.company;
+         application.title = job.title;
+         application.company_logo = job.company_logo;
+
+      }
+
+      res.send(result);
+    })
+
+    app.post('/application', async(req, res)=>{
+      const application = req.body;
+      const result = await applicationsCollection.insertOne(application);
+      res.send(result)
       
     })
 
